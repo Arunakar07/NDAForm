@@ -15,6 +15,7 @@ import "@pnp/sp/profiles";
 export interface INDAPopupState {
   showDialog: boolean;
   pathIsProtected: boolean;
+  matchedPath?: string;
 }
 
 export default class NdaPopup extends React.Component<INdaPopupProps, INDAPopupState> {
@@ -27,74 +28,117 @@ export default class NdaPopup extends React.Component<INdaPopupProps, INDAPopupS
 
     this.state = {
       showDialog: false,
-      pathIsProtected: false
+      pathIsProtected: false,
+      matchedPath: undefined
     };
 
-    this.currentPath = this.props.context.pageContext.site.serverRequestPath.toLowerCase();
-    console.log(this.currentPath);
+    // this.currentPath = this.props.context.pageContext.site.serverRequestPath.toLowerCase();
+
+    this.sp = spfi().using(SPFx(this.props.context));
+
     this.userEmail = this.props.context.pageContext.user.email;
     this.userName = this.props.context.pageContext.user.displayName;
 
-    this.sp = spfi().using(SPFx(this.props.context));
+    // Normalize current path (handle ?id=, folder paths, etc.)
+   // const url = window.location.href.toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    const idParam = params.get("id");
+
+    if (idParam) {
+      this.currentPath = decodeURIComponent(idParam).toLowerCase();
+    } else {
+      this.currentPath = decodeURIComponent(window.location.pathname).toLowerCase();
+    }
+
+    console.log("Current Path:", this.currentPath);
 
   }
 
   public async componentDidMount(): Promise<void> {
-  try {
-    const ndaPaths = await this.sp.web.lists.getByTitle("NDASharedPaths").items();
+    try {
+      const ndaPaths = await this.sp.web.lists.getByTitle("NDASharedPaths").items()
+        .select("Title", "Path")();
 
-    const matchedPath = ndaPaths.find((item:any) => 
-      item.Path?.toLowerCase() === this.currentPath
-    );
+      // Use Path if exists, else Title
+      const protectedPaths = ndaPaths.map((item: any) =>
+        decodeURIComponent((item.Path || item.Title || "").toLowerCase())
+      );
 
-    if (matchedPath) {
-      this.setState({ pathIsProtected: true });
+      console.log("✅ Protected NDA Paths:", protectedPaths);
+
+      // Match folder path or subfolder path
+      const matchedPath = protectedPaths.find((p: string) =>
+        this.currentPath === p || this.currentPath.startsWith(p + "/")
+      );
+
+      if (!matchedPath) {
+        console.warn("🚫 Path not protected, redirecting to home...");
+        window.location.href = this.props.context.pageContext.web.absoluteUrl;
+        return;
+      }
+
+      this.setState({ pathIsProtected: true, matchedPath });
 
       const responses = await this.sp.web.lists.getByTitle("NDAResponses").items();
 
-      const hasResponded = responses.some((item:any) =>
-        item.Email?.toLowerCase() === this.userEmail &&
-        item.Path?.toLowerCase() === this.currentPath && item.NDAAccepted
+      const hasResponded = responses.some((r: any) =>
+        r.Email?.toLowerCase() === this.userEmail &&
+        decodeURIComponent(r.Path?.toLowerCase() || "") === matchedPath &&
+        r.NDAAccepted === "true"
       );
 
       if (!hasResponded) {
+        console.log("⚠️ NDA not accepted yet, showing popup");
         this.setState({ showDialog: true });
+      } else {
+        console.log("✅ NDA already accepted, no popup");
       }
+
+    } catch (error) {
+      console.error("Error checking NDA path or response:", error);
     }
-  } catch (error) {
-    console.error("Error checking NDA path or response:", error);
   }
-}
 
 
   private handleAccept = async () => {
-    await this.sp.web.lists.getByTitle("NDAResponses").items.add({
-      Name: this.userName,
-      Email: this.userEmail,
-      Path: this.currentPath,
-      NDAAccepted: "true",
-      Timestamp: new Date().toISOString()
-    });
+    try {
+      await this.sp.web.lists.getByTitle("NDAResponses").items.add({
+        Name: this.userName,
+        Email: this.userEmail,
+        Path: this.state.matchedPath || this.currentPath,
+        NDAAccepted: "true",
+        Timestamp: new Date().toISOString()
+      });
 
-    this.setState({ showDialog: false });
+      console.log("✅ NDA accepted and saved");
+      this.setState({ showDialog: false });
+    } catch (error) {
+      console.error("❌ Error saving acceptance:", error);
+    }
   }
 
   private handleReject = async () => {
-    await this.sp.web.lists.getByTitle("NDAResponses").items.add({
-      Name: this.userName,
-      Email: this.userEmail,
-      Path: this.currentPath,
-      NDAAccepted: "false",
-      Timestamp: new Date().toISOString()
-    });
+    try {
+      await this.sp.web.lists.getByTitle("NDAResponses").items.add({
+        Name: this.userName,
+        Email: this.userEmail,
+        Path: this.state.matchedPath || this.currentPath,
+        NDAAccepted: "false",
+        Timestamp: new Date().toISOString()
+      });
 
-    window.location.href = this.props.context.pageContext.web.absoluteUrl;
+      console.warn("🚫 NDA rejected, redirecting to home...");
+      window.location.href = this.props.context.pageContext.web.absoluteUrl;
+    } catch (error) {
+      console.error("❌ Error saving rejection:", error);
+    }
   }
 
   public render(): React.ReactElement<INdaPopupProps> {
     return (
       <Dialog
-        hidden={!this.state.showDialog}
+        hidden={!this.state.showDialog
+        }
         dialogContentProps={{
           type: DialogType.largeHeader,
           title: 'Non-Disclosure Agreement',
@@ -107,7 +151,7 @@ export default class NdaPopup extends React.Component<INdaPopupProps, INDAPopupS
           <PrimaryButton onClick={this.handleAccept} text="Accept" />
           <DefaultButton onClick={this.handleReject} text="Reject" />
         </DialogFooter>
-      </Dialog>
+      </Dialog >
     );
   }
 
