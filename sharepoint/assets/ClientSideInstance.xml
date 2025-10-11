@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Elements xmlns="http://schemas.microsoft.com/sharepoint/">
+    <ClientSideComponentInstance
+        Title="NdaExtension"
+        Location="ClientSideExtension.ApplicationCustomizer"
+        ComponentId="f5928d3a-6f1f-4142-8c08-27e843c1186a"
+        Properties="{&quot;testMessage&quot;:&quot;Test message&quot;}">
+    </ClientSideComponentInstance>
+</Elements>

@@ -1,0 +1,22 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "plusBeta": false,
+    "isCreatingSolution": false,
+    "nodeVersion": "18.20.6",
+    "sdksVersions": {
+      "@microsoft/microsoft-graph-client": "3.0.2",
+      "@microsoft/teams-js": "2.24.0"
+    },
+    "version": "1.20.0",
+    "libraryName": "nda-form",
+    "libraryId": "dc610868-5af2-40bd-97a0-71a0186a14c9",
+    "environment": "spo",
+    "packageManager": "npm",
+    "solutionName": "nda-form",
+    "solutionShortDescription": "nda-form description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "componentType": "extension",
+    "extensionType": "ApplicationCustomizer"
+  }
+}

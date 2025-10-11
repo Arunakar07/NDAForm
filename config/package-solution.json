@@ -1,0 +1,46 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "nda-form-client-side-solution",
+    "id": "dc610868-5af2-40bd-97a0-71a0186a14c9",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.20.0"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "nda-form description"
+      },
+      "longDescription": {
+        "default": "nda-form description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "nda-form Feature",
+        "description": "The feature that activates elements of the nda-form solution.",
+        "id": "97dad331-bea8-4f7a-80eb-99ad7d364516",
+        "version": "1.0.0.0",
+        "assets": {
+          "elementManifests": [
+            "elements.xml",
+            "ClientSideInstance.xml"
+          ]
+        }
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/nda-form.sppkg"
+  }
+}
