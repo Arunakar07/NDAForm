@@ -71,7 +71,7 @@ export default class NdaExtensionApplicationCustomizer
       // 🔹 Check if current user already accepted/rejected for this exact path
       const email = this.context.pageContext.user.email?.toLowerCase();
       const responses = await this._sp.web.lists.getByTitle("NDAResponses")
-        .items.select("Email", "Path", "NDAAccepted")();
+        .items.select("Email", "Path", "NDAAccepted","ID").top(5000)();
 
       const hasAccepted = responses.some((r: any) =>
         r.Email?.toLowerCase() === email &&
