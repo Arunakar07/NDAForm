@@ -55,7 +55,7 @@ export default class NdaExtensionApplicationCustomizer
       console.log("📂 Checking NDA for path:", currentPath);
 
       // 🔹 Fetch NDA shared paths
-      const ndaItems = await this._sp.web.lists.getByTitle("NDASharedPaths").items.select("Path")();
+      const ndaItems = await this._sp.web.lists.getByTitle("NDASharedPaths").items.select("Path").top(5000)();
 
       // 🔹 Match exact path only
       const matchedItem = ndaItems.find((item: any) => {
